@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, render_template, send_from_directory
+from flask import Flask, request, render_template, send_from_directory, jsonify
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -31,12 +31,18 @@ def home():
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        return {'error': 'No file part'}
-    
+        return jsonify({'error': 'No file part'})
+
     file = request.files['file']
     if file.filename == '':
-        return {'error': 'No selected file'}
-    
+        return jsonify({'error': 'No selected file'})
+
+    dias_a_predecir = request.form.get('dias')  # Obtener el valor de los días a predecir
+    if not dias_a_predecir or not dias_a_predecir.isdigit():
+        return jsonify({'error': 'Debe ingresar un número válido de días a predecir'})
+
+    dias_a_predecir = int(dias_a_predecir)
+
     # Guardar el archivo en el directorio 'uploads'
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
     file.save(filepath)
@@ -96,7 +102,6 @@ def upload_file():
 
         # --------------------------------------------
         # Realizar predicciones futuras
-        dias_a_predecir = 30  # Predicciones para los próximos 30 días
         ultimos_dias = precios_scaled[-SECUENCIA_DIAS:]
         predicciones_futuras = []
 
@@ -123,11 +128,16 @@ def upload_file():
         plt.savefig(graph_path)
         plt.close()
 
-        # Devolver la URL de la imagen generada
-        return {'message': 'Archivo procesado con éxito', 'graph_url': graph_path}
+        # Devolver la URL de la imagen generada y las predicciones
+        predicciones_list = predicciones_futuras_orig.flatten().tolist()
+        return jsonify({
+            'message': 'Archivo procesado con éxito',
+            'graph_url': graph_path,
+            'predicciones': predicciones_list
+        })
 
     except Exception as e:
-        return {'error': f'Error al procesar el archivo: {str(e)}'}
+        return jsonify({'error': f'Error al procesar el archivo: {str(e)}'})
 
 if __name__ == '__main__':
     app.run(debug=True)

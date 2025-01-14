@@ -46,13 +46,21 @@
     <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
         <label for="file">Selecciona un archivo CSV:</label>
         <input type="file" name="file" id="file" required>
-        <button type="submit">Subir y procesar archivo</button>
+        <input class="form-control" type="text" placeholder="Readonly input here…" readonly>
+        <label for="dias">Cantidad de días a predecir:</label>
+        <input type="number" name="dias" id="dias" required>
+        <br><br>
+        <br><br>
+        <button type="submit">Realizar la prediccion</button>
     </form>
 
     <!-- Barra de carga -->
     <div id="progress-container">
         <div id="progress-bar"></div>
     </div>
+    <label for="file">File progress:</label>
+    <progress id="progress-bar" max="100" ></progress>
+
 
     <div id="result">
         <!-- Los resultados de la predicción se mostrarán aquí -->
@@ -88,6 +96,10 @@
                         resultDiv.innerHTML = `
                             <h3>${data.message}</h3>
                             <img src="${data.graph_url}" alt="Gráfico de Predicción">
+                            <h4>Predicciones:</h4>
+                            <ul>
+                                ${data.predicciones.map(pred => `<li>${pred}</li>`).join('')}
+                            </ul>
                         `;
                     } else {
                         resultDiv.innerHTML = `<h3>${data.error}</h3>`;
