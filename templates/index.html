@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicción de Precio del Café</title>
+    <style>
+        /* Barra de carga */
+        #progress-container {
+            width: 100%;
+            height: 30px;
+            background-color: #f3f3f3;
+            display: none;
+            margin-top: 20px;
+        }
+
+        #progress-bar {
+            width: 0;
+            height: 100%;
+            background-color: #4caf50;
+        }
+
+        /* Estilos adicionales */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Predicción de Precio del Café</h1>
+    
+    <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+        <label for="file">Selecciona un archivo CSV:</label>
+        <input type="file" name="file" id="file" required>
+        <button type="submit">Subir y procesar archivo</button>
+    </form>
+
+    <!-- Barra de carga -->
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <div id="result">
+        <!-- Los resultados de la predicción se mostrarán aquí -->
+    </div>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const resultDiv = document.getElementById('result');
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            progressContainer.style.display = 'block';  // Mostrar la barra de carga
+
+            // Inicializar la barra de progreso
+            progressBar.style.width = '0%';
+
+            fetch("/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Asegurarse de que la barra de progreso llegue al 100%
+                progressBar.style.width = '100%';
+
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';  // Ocultar la barra después de un pequeño delay
+                    if (data.message) {
+                        resultDiv.innerHTML = `
+                            <h3>${data.message}</h3>
+                            <img src="${data.graph_url}" alt="Gráfico de Predicción">
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `<h3>${data.error}</h3>`;
+                    }
+                }, 500); // Se oculta después de medio segundo
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<h3>Error al procesar el archivo.</h3>`;
+                progressContainer.style.display = 'none';  // Ocultar la barra de carga en caso de error
+            });
+        });
+    </script>
+</body>
+</html>
